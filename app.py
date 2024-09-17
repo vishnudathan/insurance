@@ -22,7 +22,7 @@ def download_file(url, filename):
 def load_model():
     model = "image_classifier_models.h5"
     if not os.path.isfile(model):
-        download_url = "https://github.com/vishnudathan/insurance/raw/main/models/insurance.h5"
+        download_url = "https://github.com/vishnudathan/insurance/raw/main/models/saved_model.pb"
         download_file(download_url, model)
     return keras_models.load_model(model)
 
