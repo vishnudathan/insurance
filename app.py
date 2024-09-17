@@ -1,69 +1,74 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 17 18:37:53 2024
-
-@author: Nithin
-"""
 import os
 import numpy as np
+import pickle
 import tensorflow as tf
-import tensorflow.keras.models as keras_models
 import streamlit as st
-import requests
 from PIL import Image
+from io import BytesIO
+import requests
 
-st.set_page_config(layout="wide", page_title="insurance", page_icon="🚓")
+st.set_page_config(layout="wide", page_title="Insurance", page_icon="🚓")
 
 def download_file(url, filename):
-    response = requests.get(url)
-    with open(filename, 'wb') as file:
-        file.write(response.content)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Ensure we notice bad responses
+        with open(filename, 'wb') as file:
+            file.write(response.content)
+    except requests.RequestException as e:
+        st.error(f"Error downloading file: {e}")
 
 def load_model():
-    model = "image_classifier_models.h5"
-    if not os.path.isfile(model):
-        download_url = "https://github.com/vishnudathan/insurance/raw/main/models/saved_model.pb"
-        download_file(download_url, model)
-    return keras_models.load_model(model)
-
-trained_model = load_model()
+    model_file = "model.pkl"
+    if not os.path.isfile(model_file):
+        download_url = "https://github.com/vishnudathan/insurance/raw/main/models/model.pkl"
+        download_file(download_url, model_file)
+    with open(model_file, 'rb') as file:
+        model = pickle.load(file)
+    return model
 
 def input_image_setup(uploaded_file):
     if uploaded_file is not None:
-        image_data = uploaded_file.getvalue() 
-        img = tf.image.decode_image(image_data, channels=3) 
-        resize = tf.image.resize(img, (256, 256))
-        final_data = np.expand_dims(resize / 255, 0)
-        return final_data
+        try:
+            image_data = uploaded_file.read()
+            if not image_data:
+                st.error("Uploaded file is empty")
+                raise ValueError("Uploaded file is empty")
+            img = Image.open(BytesIO(image_data)).convert("RGB")
+            img = tf.image.convert_image_dtype(np.array(img), dtype=tf.float32)
+            img = tf.image.resize(img, (256, 256))
+            return np.expand_dims(img, 0)  # Add batch dimension
+        except Exception as e:
+            st.error(f"Error processing image: {e}")
+            raise
     else:
+        st.error("No file uploaded")
         raise FileNotFoundError("No file uploaded")
-        
-def predict_img(final_data):
-    yhat = trained_model.predict(final_data)
-    if yhat > 0.5: 
-        prediction = 'Glass is not broken estimated price = 0'
-    else:
-        prediction ='Glass is borken estimated price = 5000'
-    return prediction
+
+def predict_img(model, final_data):
+    try:
+        yhat = model.predict(final_data)
+        return 'Glass is not broken. Estimated price = 0' if yhat[0] > 0.5 else 'Glass is broken. Estimated price = 5000'
+    except Exception as e:
+        st.error(f"Error during prediction: {e}")
+        raise
 
 def main():
-    st.header("insurance price")
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-    image = ""   
+    st.header("Insurance Price Estimator")
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png", "jfif"])
 
     if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image.", width = 400)
+        st.image(uploaded_file, caption="Uploaded Image.", width=400)
 
-    submit=st.button("Check here")
-    if submit:
+    if st.button("Check here"):
         if uploaded_file is None:
-            st.warning("Upload!!!")
+            st.warning("Please upload an image.")
         else:
             final_data = input_image_setup(uploaded_file)
-            prediction = predict_img(final_data)
-            st.subheader("result")
+            prediction = predict_img(trained_model, final_data)
+            st.subheader("Result")
             st.write(prediction)
 
 if __name__ == '__main__':
+    trained_model = load_model()
     main()
