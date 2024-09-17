@@ -1,6 +1,6 @@
 tensorflow
 keras
-h5py
+TensorRT
 opencv-python
 imagecodecs
 streamlit_image_comparison
