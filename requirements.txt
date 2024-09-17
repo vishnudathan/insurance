@@ -1,5 +1,6 @@
 tensorflow==2.16.1
 streamlit==1.22.0
+distutils
 pillow
 requests
 numpy == 1.24.3
