@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import pickle
 import tensorflow as tf
 import streamlit as st
 from PIL import Image
@@ -19,12 +18,11 @@ def download_file(url, filename):
         st.error(f"Error downloading file: {e}")
 
 def load_model():
-    model_file = "model.pkl"
+    model_file = "model.h5"
     if not os.path.isfile(model_file):
-        download_url = "https://github.com/vishnudathan/insurance/raw/main/models/model.pkl"
+        download_url = "https://github.com/vishnudathan/insurance/raw/main/model.h5"
         download_file(download_url, model_file)
-    with open(model_file, 'rb') as file:
-        model = pickle.load(file)
+    model = tf.keras.models.load_model(model_file)
     return model
 
 def input_image_setup(uploaded_file):
