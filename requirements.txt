@@ -1,4 +1,7 @@
-tensorflow==2.15.0
+tensorflow==2.16.1
+streamlit==1.22.0
+pillow
+requests
 numpy == 1.24.3
 opencv-python
 imagecodecs
