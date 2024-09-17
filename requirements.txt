@@ -1,5 +1,4 @@
 tensorflow
-pickle
 keras
 TensorRT
 opencv-python
