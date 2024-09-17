@@ -1,6 +1,6 @@
 tensorflow
 keras
-h5py==3.8.0
+h5py
 opencv-python
 imagecodecs
 streamlit_image_comparison
